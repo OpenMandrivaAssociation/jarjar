@@ -1,4 +1,4 @@
-# Copyright (c) 2000-2005, JPackage Project
+# Copyright (c) 2000-2007, JPackage Project
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,35 +27,43 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+%define _with_gcj_support 1
+%define gcj_support %{?_with_gcj_support:1}%{!?_with_gcj_support:%{?_without_gcj_support:0}%{!?_without_gcj_support:%{?_gcj_support:%{_gcj_support}}%{!?_gcj_support:0}}}
 
-%define gcj_support 1
 %define section free
 
 Summary:        Jar Jar Links
 Name:           jarjar
-Version:        0.6
-Release:        %mkrel 2.1
+Version:        0.9
+Release:        %mkrel 1.0.1
 Epoch:          0
 License:        GPL
 URL:            http://tonicsystems.com/products/jarjar/
 Group:          Development/Java
-#Vendor:         JPackage Project
-#Distribution:   JPackage
-Source0:        jarjar-src-0.6.zip
-BuildRequires:  ant >= 0:1.6, ant-junit >= 0:1.6, jpackage-utils >= 0:1.5
+Source0:        http://downloads.sourceforge.net/jarjar/jarjar-src-0.9.zip
+Source1:        jarjar-0.9.pom
+BuildRequires:  ant >= 0:1.6
+BuildRequires:  ant-junit >= 0:1.6
+BuildRequires:  jpackage-utils >= 0:1.7.2
 BuildRequires:  junit
 BuildRequires:  asm2
 BuildRequires:  gnu.regexp
+BuildRequires:  maven2
 
 Requires:  asm2
 Requires:  gnu.regexp
+Requires(post):    jpackage-utils >= 0:1.7.2
+Requires(postun):  jpackage-utils >= 0:1.7.2
 %if %{gcj_support}
-BuildRequires:  java-gcj-compat-devel >= 0:1.0.31
-Requires(post): java-gcj-compat >= 0:1.0.31
-Requires(postun): java-gcj-compat >= 0:1.0.31
-%else
+BuildRequires:    java-gcj-compat-devel
+Requires(post):   java-gcj-compat
+Requires(postun): java-gcj-compat
+%endif
+
+%if ! %{gcj_support}
 BuildArch:      noarch
 %endif
+
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
@@ -67,6 +75,15 @@ You can avoid problems where your library depends on a specific
 version of a library, which may conflict with the dependencies of 
 another library.
 
+%package maven2-plugin
+Summary:        Maven2 plugin for %{name}
+Group:          Development/Java
+Requires:       maven2
+Requires:       %{name} = %{epoch}:%{version}-%{release}
+
+%description maven2-plugin
+%{summary}.
+
 %package javadoc
 Summary:        Javadoc for %{name}
 Group:          Development/Java
@@ -74,26 +91,23 @@ Group:          Development/Java
 %description javadoc
 %{summary}.
 
-%package manual
-Summary:        Manual for %{name}
-Group:          Development/Java
-
-%description manual
-%{summary}.
-
 %prep
 %setup -q -n %{name}-%{version}
 # remove all binary libs
 for j in $(find . -name "*.jar"); do
-        mv $j $j.no
+    mv $j $j.no
 done
 
 %build
 pushd lib
 ln -sf $(build-classpath gnu.regexp) gnu-regexp.jar
 ln -sf $(build-classpath asm2/asm2) asm.jar
+ln -sf $(build-classpath asm2/asm2-commons) asm-commons.jar
+ln -sf $(build-classpath asm2/asm2-util) asm-util.jar
+ln -sf $(build-classpath maven2/plugin-api) maven-plugin-api.jar
 popd
-%{ant} jar javadoc test
+export CLASSPATH=$(build-classpath ant gnu.regexp asm2/asm2 asm2/asm2-commons asm2/asm2-util maven2/plugin-api)
+%{ant} jar jar-util javadoc mojo test
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -101,9 +115,26 @@ rm -rf $RPM_BUILD_ROOT
 # jars
 mkdir -p $RPM_BUILD_ROOT%{_javadir}
 
-cp -p dist/jarjar-0.6.jar \
+install -m 644 dist/%{name}-%{version}.jar \
   $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
+install -m 644 dist/%{name}-util-%{version}.jar \
+  $RPM_BUILD_ROOT%{_javadir}/%{name}-util-%{version}.jar
+install -m 644 dist/%{name}-plugin-%{version}.jar \
+  $RPM_BUILD_ROOT%{_javadir}/%{name}-maven2-plugin-%{version}.jar
+
 (cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done)
+
+%add_to_maven_depmap tonic jarjar %{version} JPP %{name}
+%add_to_maven_depmap com.tonicsystems jarjar %{version} JPP %{name}
+%add_to_maven_depmap tonic jarjar-util %{version} JPP %{name}-util
+%add_to_maven_depmap com.tonicsystems jarjar-util %{version} JPP %{name}-util
+%add_to_maven_depmap tonic jarjar-plugin %{version} JPP %{name}-plugin
+%add_to_maven_depmap com.tonicsystems jarjar-plugin %{version} JPP %{name}-plugin
+
+# poms
+install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/maven2/poms
+install -pm 644 %{SOURCE1} \
+    $RPM_BUILD_ROOT%{_datadir}/maven2/poms/JPP.%{name}.pom
 
 # javadoc
 mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
@@ -115,37 +146,46 @@ ln -s %{name}-%{version} $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 %endif
 
 %clean
-%{__rm} -rf %{buildroot}
+rm -rf $RPM_BUILD_ROOT
 
-%if %{gcj_support}
 %post
-%{update_gcjdb}
-
-%postun
-%{clean_gcjdb}
+%update_maven_depmap
+%if %{gcj_support}
+if [ -x %{_bindir}/rebuild-gcj-db ]
+then
+  %{_bindir}/rebuild-gcj-db
+fi
 %endif
 
-%post javadoc
-rm -f %{_javadocdir}/%{name}
-ln -s %{name}-%{version} %{_javadocdir}/%{name}
-
-%postun javadoc
-if [ "$1" = "0" ]; then
-  rm -f %{_javadocdir}/%{name}
+%postun
+%update_maven_depmap
+%if %{gcj_support}
+if [ -x %{_bindir}/rebuild-gcj-db ]
+then
+  %{_bindir}/rebuild-gcj-db
 fi
+%endif
 
 %files
 %defattr(0644,root,root,0755)
 %doc COPYING
-%{_javadir}/*.jar
+%{_javadir}/%{name}-%{version}.jar
+%{_javadir}/%{name}-util-%{version}.jar
+%{_javadir}/%{name}.jar
+%{_javadir}/%{name}-util.jar
+%{_datadir}/maven2/poms/*
+%config(norepace) %{_mavendepmapfragdir}/*
 %if %{gcj_support}
 %dir %{_libdir}/gcj/%{name}
-%attr(-,root,root) %{_libdir}/gcj/%{name}/*
+%attr(-,root,root) %{_libdir}/gcj/%{name}/%{name}*-%{version}.jar.*
 %endif
+
+%files maven2-plugin
+%defattr(0644,root,root,0755)
+%{_javadir}/%{name}-maven2-plugin-%{version}.jar
+%{_javadir}/%{name}-maven2-plugin.jar
 
 %files javadoc
 %defattr(0644,root,root,0755)
 %{_javadocdir}/%{name}-%{version}
 %{_javadocdir}/%{name}
-
-
