@@ -35,7 +35,7 @@
 Summary:        Jar Jar Links
 Name:           jarjar
 Version:        0.9
-Release:        %mkrel 1.0.1
+Release:        %mkrel 1.0.2
 Epoch:          0
 License:        GPL
 URL:            http://tonicsystems.com/products/jarjar/
