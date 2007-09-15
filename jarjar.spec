@@ -35,7 +35,7 @@
 Summary:        Jar Jar Links
 Name:           jarjar
 Version:        0.9
-Release:        %mkrel 1.0.3
+Release:        %mkrel 1.0.4
 Epoch:          0
 License:        GPL
 URL:            http://tonicsystems.com/products/jarjar/
@@ -56,8 +56,6 @@ Requires(post):    jpackage-utils >= 0:1.7.2
 Requires(postun):  jpackage-utils >= 0:1.7.2
 %if %{gcj_support}
 BuildRequires:    java-gcj-compat-devel
-Requires(post):   java-gcj-compat
-Requires(postun): java-gcj-compat
 %endif
 
 %if ! %{gcj_support}
