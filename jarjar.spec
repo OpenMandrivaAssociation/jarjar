@@ -35,7 +35,7 @@
 Summary:        Jar Jar Links
 Name:           jarjar
 Version:        0.9
-Release:        %mkrel 1.0.4
+Release:        %mkrel 1.0.5
 Epoch:          0
 License:        GPL
 URL:            http://tonicsystems.com/products/jarjar/
@@ -44,7 +44,7 @@ Source0:        http://downloads.sourceforge.net/jarjar/jarjar-src-0.9.zip
 Source1:        jarjar-0.9.pom
 BuildRequires:  ant >= 0:1.6
 BuildRequires:  ant-junit >= 0:1.6
-BuildRequires:  jpackage-utils >= 0:1.7.2
+BuildRequires:  java-rpmbuild >= 0:1.7.2
 BuildRequires:  junit
 BuildRequires:  asm2
 BuildRequires:  gnu.regexp
