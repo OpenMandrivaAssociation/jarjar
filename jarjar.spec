@@ -62,7 +62,6 @@ BuildRequires:    java-gcj-compat-devel
 BuildArch:      noarch
 %endif
 
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
 Jar Jar Links is a utility that makes it easy to repackage Java 
