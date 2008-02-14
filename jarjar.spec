@@ -40,6 +40,7 @@ Epoch:          0
 License:        GPL
 URL:            http://tonicsystems.com/products/jarjar/
 Group:          Development/Java
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Source0:        http://downloads.sourceforge.net/jarjar/jarjar-src-0.9.zip
 Source1:        jarjar-0.9.pom
 BuildRequires:  ant >= 0:1.6
