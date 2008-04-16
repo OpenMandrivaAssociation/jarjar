@@ -34,14 +34,14 @@
 
 Summary:        Jar Jar Links
 Name:           jarjar
-Version:        0.9
-Release:        %mkrel 1.0.5
+Version:        1.0
+Release:        %mkrel 0.rc7.1
 Epoch:          0
 License:        GPL
-URL:            http://tonicsystems.com/products/jarjar/
+URL:            http://code.google.com/p/jarjar/
 Group:          Development/Java
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-Source0:        http://downloads.sourceforge.net/jarjar/jarjar-src-0.9.zip
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+Source0:        http://%{name}.googlecode.com/files/%{name}-src-1.0rc7.zip
 Source1:        jarjar-0.9.pom
 BuildRequires:  ant >= 0:1.6
 BuildRequires:  ant-junit >= 0:1.6
@@ -90,22 +90,18 @@ Group:          Development/Java
 %{summary}.
 
 %prep
-%setup -q -n %{name}-%{version}
-# remove all binary libs
-for j in $(find . -name "*.jar"); do
-    mv $j $j.no
-done
+%setup -q -n %{name}-%{version}rc7
+%remove_java_binaries
 
 %build
 pushd lib
 ln -sf $(build-classpath gnu.regexp) gnu-regexp.jar
-ln -sf $(build-classpath asm2/asm2) asm.jar
-ln -sf $(build-classpath asm2/asm2-commons) asm-commons.jar
-ln -sf $(build-classpath asm2/asm2-util) asm-util.jar
+ln -sf $(build-classpath asm3/asm3) asm-3.1.jar
+ln -sf $(build-classpath asm3/asm3-commons) asm-commons-3.1.jar
 ln -sf $(build-classpath maven2/plugin-api) maven-plugin-api.jar
 popd
-export CLASSPATH=$(build-classpath ant gnu.regexp asm2/asm2 asm2/asm2-commons asm2/asm2-util maven2/plugin-api)
-%{ant} jar jar-util javadoc mojo test
+export CLASSPATH=$(build-classpath ant asm3/asm3 asm3/asm3-commons maven2/plugin-api)
+%{ant} jar jar-util javadoc mojo
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -113,11 +109,11 @@ rm -rf $RPM_BUILD_ROOT
 # jars
 mkdir -p $RPM_BUILD_ROOT%{_javadir}
 
-install -m 644 dist/%{name}-%{version}.jar \
+install -m 644 dist/%{name}-%{version}rc7.jar \
   $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
-install -m 644 dist/%{name}-util-%{version}.jar \
+install -m 644 dist/%{name}-util-%{version}rc7.jar \
   $RPM_BUILD_ROOT%{_javadir}/%{name}-util-%{version}.jar
-install -m 644 dist/%{name}-plugin-%{version}.jar \
+install -m 644 dist/%{name}-plugin-%{version}rc7.jar \
   $RPM_BUILD_ROOT%{_javadir}/%{name}-maven2-plugin-%{version}.jar
 
 (cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done)
