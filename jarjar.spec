@@ -47,12 +47,10 @@ BuildRequires:  ant >= 0:1.6
 BuildRequires:  ant-junit >= 0:1.6
 BuildRequires:  java-rpmbuild >= 0:1.7.2
 BuildRequires:  junit
-BuildRequires:  asm2
-BuildRequires:  gnu.regexp
+BuildRequires:  asm3
 BuildRequires:  maven2
 
-Requires:  asm2
-Requires:  gnu.regexp
+Requires:  asm3
 Requires(post):    jpackage-utils >= 0:1.7.2
 Requires(postun):  jpackage-utils >= 0:1.7.2
 %if %{gcj_support}
@@ -95,7 +93,6 @@ Group:          Development/Java
 
 %build
 pushd lib
-ln -sf $(build-classpath gnu.regexp) gnu-regexp.jar
 ln -sf $(build-classpath asm3/asm3) asm-3.1.jar
 ln -sf $(build-classpath asm3/asm3-commons) asm-commons-3.1.jar
 ln -sf $(build-classpath maven2/plugin-api) maven-plugin-api.jar
