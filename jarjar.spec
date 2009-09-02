@@ -35,7 +35,7 @@
 Summary:        Jar Jar Links
 Name:           jarjar
 Version:        1.0
-Release:        %mkrel 2.rc7.1
+Release:        %mkrel 2.rc7.2
 Epoch:          0
 License:        GPL
 URL:            http://code.google.com/p/jarjar/
