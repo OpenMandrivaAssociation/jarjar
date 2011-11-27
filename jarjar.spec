@@ -30,7 +30,7 @@
 
 Name:           jarjar
 Version:        1.0
-Release:        4
+Release:        6
 Summary:        Jar Jar Links
 License:        ASL 2.0
 URL:            http://code.google.com/p/jarjar/
