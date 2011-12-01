@@ -109,14 +109,14 @@ ant jar jar-util javadoc mojo test
 
 %install
 # jars
-mkdir -p $RPM_BUILD_ROOT%{_javadir}
+mkdir -p %{buildroot}%{_javadir}
 
 install -m 644 dist/%{name}-%{version}.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+  %{buildroot}%{_javadir}/%{name}.jar
 install -m 644 dist/%{name}-util-%{version}.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-util.jar
+  %{buildroot}%{_javadir}/%{name}-util.jar
 install -m 644 dist/%{name}-plugin-%{version}.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-maven-plugin.jar
+  %{buildroot}%{_javadir}/%{name}-maven-plugin.jar
 
 %add_to_maven_depmap jarjar           %{name} %{version} JPP %{name}
 %add_to_maven_depmap tonic            %{name} %{version} JPP %{name}
@@ -132,15 +132,15 @@ sed -i -e s/@VERSION@/%{version}/g maven/pom.xml
 
 # poms
 install -pD -T -m 644 %{SOURCE1} \
-    $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
+    %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
 install -pD -T -m 644 %{SOURCE2} \
-    $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}-util.pom
+    %{buildroot}%{_mavenpomdir}/JPP-%{name}-util.pom
 install -pD -T -m 644 maven/pom.xml \
-    $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}-plugin.pom
+    %{buildroot}%{_mavenpomdir}/JPP-%{name}-plugin.pom
 
 # javadoc
-mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -pr dist/javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+mkdir -p %{buildroot}%{_javadocdir}/%{name}
+cp -pr dist/javadoc/* %{buildroot}%{_javadocdir}/%{name}
 
 %post
 %update_maven_depmap
