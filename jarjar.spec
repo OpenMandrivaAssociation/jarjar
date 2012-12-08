@@ -1,4 +1,4 @@
-# Copyright (c) 2000-2008, JPackage Project
+# Copyright (c) 2000-2007, JPackage Project
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,39 +27,40 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+%define _with_gcj_support 1
+%define gcj_support %{?_with_gcj_support:1}%{!?_with_gcj_support:%{?_without_gcj_support:0}%{!?_without_gcj_support:%{?_gcj_support:%{_gcj_support}}%{!?_gcj_support:0}}}
 
+%define section free
+
+Summary:        Jar Jar Links
 Name:           jarjar
 Version:        1.0
-Release:        6
-Summary:        Jar Jar Links
-License:        ASL 2.0
+Release:        2.rc7.6
+Epoch:          0
+License:        GPL
 URL:            http://code.google.com/p/jarjar/
 Group:          Development/Java
-# svn export http://jarjar.googlecode.com/svn/tags/release-1-0/jarjar jarjar-1.0
-Source0:        jarjar-src-1.0.zip
-Source1:        jarjar.pom
-Source2:        jarjar-util.pom
-# Change version from "snapshot" to "1.0"
-Patch0:         jarjar-1.0-build_xml.patch
-# Add a cast to make a method unambiguous
-Patch1:         jarjar-AntJarProcessor-cast.patch
-BuildRequires:  ant
-BuildRequires:  ant-junit
-BuildRequires:  jpackage-utils >= 0:1.7.2
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+Source0:        http://%{name}.googlecode.com/files/%{name}-src-1.0rc7.zip
+Source1:        jarjar-0.9.pom
+BuildRequires:  ant >= 0:1.6
+BuildRequires:  ant-junit >= 0:1.6
+BuildRequires:  java-rpmbuild >= 0:1.7.2
 BuildRequires:  junit
-BuildRequires:  objectweb-asm
-BuildRequires:  gnu-regexp
-BuildRequires:  maven
-Requires:       objectweb-asm
-Requires:       gnu-regexp
-Requires:       jpackage-utils >= 0:1.7.2
+BuildRequires:  asm3
+BuildRequires:  maven2
+
+Requires:  asm3
 Requires(post):    jpackage-utils >= 0:1.7.2
 Requires(postun):  jpackage-utils >= 0:1.7.2
+%if %{gcj_support}
+BuildRequires:    java-gcj-compat-devel
+%endif
 
+%if ! %{gcj_support}
 BuildArch:      noarch
+%endif
 
-# Work around weird file permission problems
-%define __jar_repack %{nil}
 
 %description
 Jar Jar Links is a utility that makes it easy to repackage Java 
@@ -70,101 +71,114 @@ You can avoid problems where your library depends on a specific
 version of a library, which may conflict with the dependencies of 
 another library.
 
-%package maven-plugin
-Summary:        Maven plugin for %{name}
+%package maven2-plugin
+Summary:        Maven2 plugin for %{name}
 Group:          Development/Java
-Requires:       maven
-Requires:       %{name} = %{version}-%{release}
-Obsoletes: %{name}-maven2-plugin <= 1.0
-Provides: %{name}-maven2-plugin = %{version}-%{release}
+Requires:       maven2
+Requires:       %{name} = %{epoch}:%{version}-%{release}
 
-%description maven-plugin
+%description maven2-plugin
 %{summary}.
 
 %package javadoc
 Summary:        Javadoc for %{name}
 Group:          Development/Java
-Requires:       jpackage-utils
 
 %description javadoc
 %{summary}.
 
 %prep
-%setup -q -n %{name}-%{version}
-# remove all binary libs
-rm -f lib/*.jar
-%patch0 -p1
-%patch1 -p1
+%setup -q -n %{name}-%{version}rc7
+%remove_java_binaries
 
 %build
 pushd lib
-ln -sf $(build-classpath gnu-regexp)
-ln -sf $(build-classpath objectweb-asm/asm-3.1) asm-3.1.jar
-ln -sf $(build-classpath objectweb-asm/asm-commons-3.1) asm-commons-3.1.jar
-ln -sf $(build-classpath maven/maven-plugin-api) maven-plugin-api.jar
+ln -sf $(build-classpath asm3/asm3) asm-3.1.jar
+ln -sf $(build-classpath asm3/asm3-commons) asm-commons-3.1.jar
+ln -sf $(build-classpath maven2/plugin-api) maven-plugin-api.jar
 popd
-export OPT_JAR_LIST="ant/ant-junit junit"
-export CLASSPATH=$(build-classpath ant)
-ant jar jar-util javadoc mojo test
+export CLASSPATH=$(build-classpath ant asm3/asm3 asm3/asm3-commons maven2/plugin-api)
+%{ant} jar jar-util javadoc mojo
 
 %install
+rm -rf $RPM_BUILD_ROOT
+
 # jars
-mkdir -p %{buildroot}%{_javadir}
+mkdir -p $RPM_BUILD_ROOT%{_javadir}
 
-install -m 644 dist/%{name}-%{version}.jar \
-  %{buildroot}%{_javadir}/%{name}.jar
-install -m 644 dist/%{name}-util-%{version}.jar \
-  %{buildroot}%{_javadir}/%{name}-util.jar
-install -m 644 dist/%{name}-plugin-%{version}.jar \
-  %{buildroot}%{_javadir}/%{name}-maven-plugin.jar
+install -m 644 dist/%{name}-%{version}rc7.jar \
+  $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
+install -m 644 dist/%{name}-util-%{version}rc7.jar \
+  $RPM_BUILD_ROOT%{_javadir}/%{name}-util-%{version}.jar
+install -m 644 dist/%{name}-plugin-%{version}rc7.jar \
+  $RPM_BUILD_ROOT%{_javadir}/%{name}-maven2-plugin-%{version}.jar
 
-%add_to_maven_depmap jarjar           %{name} %{version} JPP %{name}
-%add_to_maven_depmap tonic            %{name} %{version} JPP %{name}
-%add_to_maven_depmap com.tonicsystems %{name} %{version} JPP %{name}
-%add_to_maven_depmap jarjar           %{name}-util %{version} JPP %{name}-util
-%add_to_maven_depmap tonic            %{name}-util %{version} JPP %{name}-util
-%add_to_maven_depmap com.tonicsystems %{name}-util %{version} JPP %{name}-util
-%add_to_maven_depmap jarjar           %{name}-plugin %{version} JPP %{name}-plugin
-%add_to_maven_depmap tonic            %{name}-plugin %{version} JPP %{name}-plugin
-%add_to_maven_depmap com.tonicsystems %{name}-plugin %{version} JPP %{name}-plugin
+(cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done)
 
-sed -i -e s/@VERSION@/%{version}/g maven/pom.xml
+%add_to_maven_depmap tonic jarjar %{version} JPP %{name}
+%add_to_maven_depmap com.tonicsystems jarjar %{version} JPP %{name}
+%add_to_maven_depmap tonic jarjar-util %{version} JPP %{name}-util
+%add_to_maven_depmap com.tonicsystems jarjar-util %{version} JPP %{name}-util
+%add_to_maven_depmap tonic jarjar-plugin %{version} JPP %{name}-plugin
+%add_to_maven_depmap com.tonicsystems jarjar-plugin %{version} JPP %{name}-plugin
 
 # poms
-install -pD -T -m 644 %{SOURCE1} \
-    %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
-install -pD -T -m 644 %{SOURCE2} \
-    %{buildroot}%{_mavenpomdir}/JPP-%{name}-util.pom
-install -pD -T -m 644 maven/pom.xml \
-    %{buildroot}%{_mavenpomdir}/JPP-%{name}-plugin.pom
+install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/maven2/poms
+install -pm 644 %{SOURCE1} \
+    $RPM_BUILD_ROOT%{_datadir}/maven2/poms/JPP.%{name}.pom
 
 # javadoc
-mkdir -p %{buildroot}%{_javadocdir}/%{name}
-cp -pr dist/javadoc/* %{buildroot}%{_javadocdir}/%{name}
+mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
+cp -pr dist/javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
+ln -s %{name}-%{version} $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+
+%if %{gcj_support}
+%{_bindir}/aot-compile-rpm
+%endif
+
+%clean
+rm -rf $RPM_BUILD_ROOT
 
 %post
 %update_maven_depmap
+%if %{gcj_support}
+if [ -x %{_bindir}/rebuild-gcj-db ]
+then
+  %{_bindir}/rebuild-gcj-db
+fi
+%endif
 
 %postun
 %update_maven_depmap
-
-%pre javadoc
-# workaround for rpm bug, can be removed in F-17
-[ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
-rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
+%if %{gcj_support}
+if [ -x %{_bindir}/rebuild-gcj-db ]
+then
+  %{_bindir}/rebuild-gcj-db
+fi
+%endif
 
 %files
+%defattr(0644,root,root,0755)
 %doc COPYING
+%{_javadir}/%{name}-%{version}.jar
+%{_javadir}/%{name}-util-%{version}.jar
 %{_javadir}/%{name}.jar
 %{_javadir}/%{name}-util.jar
-%{_mavenpomdir}/JPP-%{name}.pom
-%{_mavenpomdir}/JPP-%{name}-util.pom
-%{_mavendepmapfragdir}/*
+%{_datadir}/maven2/poms/*
+%config(noreplace) %{_mavendepmapfragdir}/*
+%if %{gcj_support}
+%dir %{_libdir}/gcj/%{name}
+%attr(-,root,root) %{_libdir}/gcj/%{name}/%{name}*-%{version}.jar.*
+%endif
 
-%files maven-plugin
-%{_mavenpomdir}/JPP-%{name}-plugin.pom
-%{_javadir}/%{name}-maven-plugin.jar
+%files maven2-plugin
+%defattr(0644,root,root,0755)
+%{_javadir}/%{name}-maven2-plugin-%{version}.jar
+%{_javadir}/%{name}-maven2-plugin.jar
 
 %files javadoc
+%defattr(0644,root,root,0755)
+%{_javadocdir}/%{name}-%{version}
 %{_javadocdir}/%{name}
+
 
