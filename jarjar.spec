@@ -32,33 +32,32 @@
 
 %define section free
 
-Summary:        Jar Jar Links
-Name:           jarjar
-Version:        1.0
-Release:        2.rc7.6
-Epoch:          0
-License:        GPL
-URL:            http://code.google.com/p/jarjar/
-Group:          Development/Java
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-Source0:        http://%{name}.googlecode.com/files/%{name}-src-1.0rc7.zip
-Source1:        jarjar-0.9.pom
-BuildRequires:  ant >= 0:1.6
-BuildRequires:  ant-junit >= 0:1.6
-BuildRequires:  java-rpmbuild >= 0:1.7.2
-BuildRequires:  junit
-BuildRequires:  asm3
-BuildRequires:  maven2
+Summary:		Jar Jar Links
+Name:			jarjar
+Version:		1.0
+Release:		2.rc7.7
+Epoch:			0
+License:		GPL
+URL:			http://code.google.com/p/jarjar/
+Group:			Development/Java
+Source0:		http://%{name}.googlecode.com/files/%{name}-src-1.0rc7.zip
+Source1:		jarjar-0.9.pom
+BuildRequires:	ant >= 0:1.6
+BuildRequires:	ant-junit >= 0:1.6
+BuildRequires:	java-rpmbuild >= 0:1.7.2
+BuildRequires:	junit
+BuildRequires:	asm3
+BuildRequires:	maven2
 
-Requires:  asm3
-Requires(post):    jpackage-utils >= 0:1.7.2
-Requires(postun):  jpackage-utils >= 0:1.7.2
+Requires:		asm3
+Requires(post):	jpackage-utils >= 0:1.7.2
+Requires(postun):	jpackage-utils >= 0:1.7.2
 %if %{gcj_support}
-BuildRequires:    java-gcj-compat-devel
+BuildRequires:		java-gcj-compat-devel
 %endif
 
 %if ! %{gcj_support}
-BuildArch:      noarch
+BuildArch:		noarch
 %endif
 
 
@@ -72,17 +71,17 @@ version of a library, which may conflict with the dependencies of
 another library.
 
 %package maven2-plugin
-Summary:        Maven2 plugin for %{name}
-Group:          Development/Java
-Requires:       maven2
-Requires:       %{name} = %{epoch}:%{version}-%{release}
+Summary:		Maven2 plugin for %{name}
+Group:			Development/Java
+Requires:		maven2
+Requires:		%{name} = %{epoch}:%{version}-%{release}
 
 %description maven2-plugin
 %{summary}.
 
 %package javadoc
-Summary:        Javadoc for %{name}
-Group:          Development/Java
+Summary:		Javadoc for %{name}
+Group:			Development/Java
 
 %description javadoc
 %{summary}.
@@ -101,19 +100,18 @@ export CLASSPATH=$(build-classpath ant asm3/asm3 asm3/asm3-commons maven2/plugin
 %{ant} jar jar-util javadoc mojo
 
 %install
-rm -rf $RPM_BUILD_ROOT
 
 # jars
-mkdir -p $RPM_BUILD_ROOT%{_javadir}
+mkdir -p %{buildroot}%{_javadir}
 
 install -m 644 dist/%{name}-%{version}rc7.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
+  %{buildroot}%{_javadir}/%{name}-%{version}.jar
 install -m 644 dist/%{name}-util-%{version}rc7.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-util-%{version}.jar
+  %{buildroot}%{_javadir}/%{name}-util-%{version}.jar
 install -m 644 dist/%{name}-plugin-%{version}rc7.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-maven2-plugin-%{version}.jar
+  %{buildroot}%{_javadir}/%{name}-maven2-plugin-%{version}.jar
 
-(cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done)
+(cd %{buildroot}%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done)
 
 %add_to_maven_depmap tonic jarjar %{version} JPP %{name}
 %add_to_maven_depmap com.tonicsystems jarjar %{version} JPP %{name}
@@ -123,21 +121,18 @@ install -m 644 dist/%{name}-plugin-%{version}rc7.jar \
 %add_to_maven_depmap com.tonicsystems jarjar-plugin %{version} JPP %{name}-plugin
 
 # poms
-install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/maven2/poms
+install -d -m 755 %{buildroot}%{_datadir}/maven2/poms
 install -pm 644 %{SOURCE1} \
-    $RPM_BUILD_ROOT%{_datadir}/maven2/poms/JPP.%{name}.pom
+    %{buildroot}%{_datadir}/maven2/poms/JPP.%{name}.pom
 
 # javadoc
-mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-cp -pr dist/javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-ln -s %{name}-%{version} $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+mkdir -p %{buildroot}%{_javadocdir}/%{name}-%{version}
+cp -pr dist/javadoc/* %{buildroot}%{_javadocdir}/%{name}-%{version}
+ln -s %{name}-%{version} %{buildroot}%{_javadocdir}/%{name}
 
 %if %{gcj_support}
 %{_bindir}/aot-compile-rpm
 %endif
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %post
 %update_maven_depmap
