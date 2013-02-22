@@ -43,9 +43,9 @@ Group:			Development/Java
 Source0:		http://%{name}.googlecode.com/files/%{name}-src-1.0rc7.zip
 Source1:		jarjar-0.9.pom
 BuildRequires:	ant >= 0:1.6
-BuildRequires:	ant-junit >= 0:1.6
+#BuildRequires:	ant-junit >= 0:1.6
 BuildRequires:	java-rpmbuild >= 0:1.7.2
-BuildRequires:	junit
+#BuildRequires:	junit
 BuildRequires:	asm3
 BuildRequires:	maven2
 
