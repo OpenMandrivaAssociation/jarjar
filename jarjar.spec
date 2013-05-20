@@ -2,9 +2,8 @@ Summary:	Jar Jar Links
 Name:		jarjar
 Version:	1.0
 Release:	2.rc7.8
-Epoch:		0
-License:	GPL
-URL:		http://code.google.com/p/jarjar/
+License:	GPLv2
+Url:		http://code.google.com/p/jarjar/
 Group:		Development/Java
 Source0:	http://%{name}.googlecode.com/files/%{name}-src-1.0rc7.zip
 Source1:	jarjar-0.9.pom
@@ -15,12 +14,10 @@ BuildRequires:	java-rpmbuild >= 0:1.7.2
 BuildRequires:	asm3
 BuildRequires:	maven2
 BuildRequires:	java-1.6.0-openjdk-devel
-
-Requires:	asm3
-Requires(post):	jpackage-utils >= 0:1.7.2
-Requires(postun):	jpackage-utils >= 0:1.7.2
 BuildArch:	noarch
 
+Requires:	asm3
+Requires(post,postun):	jpackage-utils >= 0:1.7.2
 
 %description
 Jar Jar Links is a utility that makes it easy to repackage Java 
@@ -35,7 +32,7 @@ another library.
 Summary:	Maven2 plugin for %{name}
 Group:		Development/Java
 Requires:	maven2
-Requires:	%{name} = %EVRD
+Requires:	%{name} = %{EVRD}
 
 %description maven2-plugin
 %{summary}.
@@ -48,7 +45,7 @@ Group:		Development/Java
 %{summary}.
 
 %prep
-%setup -q -n %{name}-%{version}rc7
+%setup -qn %{name}-%{version}rc7
 %remove_java_binaries
 
 %build
@@ -62,16 +59,15 @@ export JAVA_HOME=%_prefix/lib/jvm/java-1.6.0
 ant jar jar-util javadoc mojo
 
 %install
-
 # jars
 mkdir -p %{buildroot}%{_javadir}
 
 install -m 644 dist/%{name}-%{version}rc7.jar \
-  %{buildroot}%{_javadir}/%{name}-%{version}.jar
+	%{buildroot}%{_javadir}/%{name}-%{version}.jar
 install -m 644 dist/%{name}-util-%{version}rc7.jar \
-  %{buildroot}%{_javadir}/%{name}-util-%{version}.jar
+	%{buildroot}%{_javadir}/%{name}-util-%{version}.jar
 install -m 644 dist/%{name}-plugin-%{version}rc7.jar \
-  %{buildroot}%{_javadir}/%{name}-maven2-plugin-%{version}.jar
+	%{buildroot}%{_javadir}/%{name}-maven2-plugin-%{version}.jar
 
 (cd %{buildroot}%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done)
 
@@ -85,7 +81,7 @@ install -m 644 dist/%{name}-plugin-%{version}rc7.jar \
 # poms
 install -d -m 755 %{buildroot}%{_datadir}/maven2/poms
 install -pm 644 %{SOURCE1} \
-    %{buildroot}%{_datadir}/maven2/poms/JPP.%{name}.pom
+	%{buildroot}%{_datadir}/maven2/poms/JPP.%{name}.pom
 
 # javadoc
 mkdir -p %{buildroot}%{_javadocdir}/%{name}-%{version}
@@ -99,7 +95,6 @@ ln -s %{name}-%{version} %{buildroot}%{_javadocdir}/%{name}
 %update_maven_depmap
 
 %files
-%defattr(0644,root,root,0755)
 %doc COPYING
 %{_javadir}/%{name}-%{version}.jar
 %{_javadir}/%{name}-util-%{version}.jar
@@ -109,11 +104,10 @@ ln -s %{name}-%{version} %{buildroot}%{_javadocdir}/%{name}
 %config(noreplace) %{_mavendepmapfragdir}/*
 
 %files maven2-plugin
-%defattr(0644,root,root,0755)
 %{_javadir}/%{name}-maven2-plugin-%{version}.jar
 %{_javadir}/%{name}-maven2-plugin.jar
 
 %files javadoc
-%defattr(0644,root,root,0755)
 %{_javadocdir}/%{name}-%{version}
 %{_javadocdir}/%{name}
+
