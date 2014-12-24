@@ -31,26 +31,25 @@
 
 Name:           jarjar
 Version:        1.4
-Release:        4.0%{?dist}
+Release:        13.1
 Summary:        Jar Jar Links
+Group:		Development/Java
 License:        ASL 2.0
 URL:            http://code.google.com/p/jarjar/
-
 Source0:        http://jarjar.googlecode.com/files/jarjar-src-1.4.zip
 Source1:        jarjar.pom
 Source2:        jarjar-util.pom
 Patch0:         fix-maven-plugin.patch
+Patch1:         do-not-embed-asm.patch
+
 BuildRequires:  ant
 BuildRequires:  ant-junit
-BuildRequires:  jpackage-utils
-BuildRequires:  objectweb-asm4
-BuildRequires:  maven-local
-Requires:       objectweb-asm4
+BuildRequires:  objectweb-asm
+BuildRequires:  javapackages-local
+BuildRequires:  maven
+Requires:       objectweb-asm
 
 BuildArch:      noarch
-
-# Work around weird file permission problems
-%define __jar_repack %{nil}
 
 %description
 Jar Jar Links is a utility that makes it easy to repackage Java 
@@ -63,11 +62,8 @@ another library.
 
 %package maven-plugin
 Summary:        Maven plugin for %{name}
-
 Requires:       maven
 Requires:       %{name} = %{version}-%{release}
-Obsoletes: %{name}-maven2-plugin <= 1.0
-Provides: %{name}-maven2-plugin = %{version}-%{release}
 
 %description maven-plugin
 %{summary}.
@@ -75,76 +71,89 @@ Provides: %{name}-maven2-plugin = %{version}-%{release}
 %package javadoc
 Summary:        Javadoc for %{name}
 
-
 %description javadoc
 %{summary}.
 
 %prep
 %setup -q -n %{name}-%{version}
-%patch0 -p0 -b.orig
+%patch0
+%patch1
 
 # remove all binary libs
 rm -f lib/*.jar
 
+%mvn_package :jarjar-plugin %{name}-maven-plugin
+
+# create ant config
+echo "jarjar/jarjar objectweb-asm/asm objectweb-asm/asm-commons" > jarjar.ant
+
 %build
 pushd lib
-ln -sf $(build-classpath objectweb-asm4/asm) asm-4.0.jar
-ln -sf $(build-classpath objectweb-asm4/asm-commons) asm-commons-4.0.jar
+ln -sf $(build-classpath objectweb-asm/asm) asm-4.0.jar
+ln -sf $(build-classpath objectweb-asm/asm-commons) asm-commons-4.0.jar
 ln -sf $(build-classpath maven/maven-plugin-api) maven-plugin-api.jar
 popd
-export OPT_JAR_LIST="ant/ant-junit junit"
 export CLASSPATH=$(build-classpath ant)
 ant jar jar-util javadoc mojo test
 
-%install
-# jars
-mkdir -p $RPM_BUILD_ROOT%{_javadir}
-
-install -m 644 dist/%{name}-%{version}.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
-install -m 644 dist/%{name}-util-%{version}.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-util.jar
-install -m 644 dist/%{name}-plugin-%{version}.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-plugin.jar
-
 sed -i -e s/@VERSION@/%{version}/g maven/pom.xml
 
-# poms
-install -pD -T -m 644 %{SOURCE1} \
-    $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
-install -pD -T -m 644 %{SOURCE2} \
-    $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}-util.pom
-install -pD -T -m 644 maven/pom.xml \
-    $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}-plugin.pom
+# request maven artifact installation
+%mvn_artifact %{SOURCE1} dist/jarjar-%{version}.jar
+%mvn_artifact %{SOURCE2} dist/jarjar-util-%{version}.jar
+%mvn_artifact maven/pom.xml dist/jarjar-plugin-%{version}.jar
+%mvn_alias tonic:jarjar jarjar:jarjar com.tonicsystems:jarjar com.googlecode.jarjar:jarjar org.gradle.jarjar:jarjar
+%mvn_alias tonic:jarjar-util jarjar:jarjar-util com.tonicsystems:jarjar-util
+%mvn_alias com.tonicsystems.jarjar:jarjar-plugin jarjar:jarjar-plugin tonic:jarjar-plugin com.tonicsystems:jarjar-plugin
 
-# depmaps
-%add_maven_depmap JPP-%{name}.pom %{name}.jar -a "jarjar:%{name},com.tonicsystems:%{name}"
-%add_maven_depmap JPP-%{name}-util.pom %{name}-util.jar -a "jarjar:%{name}-util,com.tonicsystems:%{name}-util"
-%add_maven_depmap JPP-%{name}-plugin.pom %{name}-plugin.jar -a "jarjar:%{name}-plugin,tonic:%{name}-plugin,com.tonicsystems:%{name}-plugin" -f "plugin"
+%install
+%mvn_install -J dist/javadoc
 
-# javadoc
-mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -pr dist/javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+%jpackage_script com.tonicsystems.jarjar.Main "" "" jarjar/jarjar:objectweb-asm/asm:objectweb-asm/asm-commons %{name} true
 
-%files
+# install ant config
+install -m 644 -D jarjar.ant %{buildroot}%{_sysconfdir}/ant.d/jarjar
+
+%files -f .mfiles
 %doc COPYING
-%{_javadir}/%{name}.jar
-%{_javadir}/%{name}-util.jar
-%{_mavenpomdir}/JPP-%{name}.pom
-%{_mavenpomdir}/JPP-%{name}-util.pom
-%{_mavendepmapfragdir}/%{name}
+%{_bindir}/%{name}
+%{_sysconfdir}/ant.d/jarjar
+%dir %{_javadir}/%{name}
 
-%files maven-plugin
+%files maven-plugin -f .mfiles-%{name}-maven-plugin
 %doc COPYING
-%{_javadir}/%{name}-plugin.jar
-%{_mavenpomdir}/JPP-%{name}-plugin.pom
-%{_mavendepmapfragdir}/%{name}-plugin
 
-%files javadoc
+%files javadoc -f .mfiles-javadoc
 %doc COPYING
-%{_javadocdir}/%{name}
 
 %changelog
+* Thu Dec 18 2014 Mat Booth <mat.booth@redhat.com> - 1.4-13
+- Don't embed asm inside jarjar, fixes rhbz#1161553
+
+* Fri Nov  7 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.4-12
+- Install JPackage script in bindir
+
+* Tue Oct 14 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.4-11
+- Remove legacy Obsoletes/Provides for maven2 plugin
+
+* Wed Oct  8 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.4-10
+- Add alias for org.gradle.jarjar:jarjar
+
+* Mon Jun 09 2014 Mat Booth <mat.booth@redhat.com> - 1.4-9
+- Fix BR on asm and install with maven
+
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Thu May 29 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.4-7
+- Use .mfiles generated during build
+
+* Fri Oct 25 2013 Vít Ondruch <vondruch@redhat.com> - 1.4-6
+- Fix alias to com.googlecode.jarjar:jarjar.
+
+* Thu Oct 24 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.4-5
+- Add alias for com.googlecode:jarjar
+
 * Sun Sep 15 2013 Mat Booth <fedora@matbooth.co.uk> - 1.4-4
 - Fix contents of maven plugin jar, rhbz #1006568
 
@@ -203,3 +212,4 @@ cp -pr dist/javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 
 * Sun Nov  1 2009 Mary Ellen Foster <mefoster at gmail.com> 0.9-3
 - Initial package, based on jpackage jarjar-0.9-2
+
