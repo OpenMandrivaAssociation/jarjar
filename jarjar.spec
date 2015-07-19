@@ -31,7 +31,7 @@
 
 Name:           jarjar
 Version:        1.4
-Release:        13.1
+Release:        13.2
 Summary:        Jar Jar Links
 Group:		Development/Java
 License:        ASL 2.0
