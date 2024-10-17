@@ -35,7 +35,7 @@ Release:        13.3
 Summary:        Jar Jar Links
 Group:		Development/Java
 License:        ASL 2.0
-URL:            http://code.google.com/p/jarjar/
+URL:            https://code.google.com/p/jarjar/
 Source0:        http://jarjar.googlecode.com/files/jarjar-src-1.4.zip
 Source1:        jarjar.pom
 Source2:        jarjar-util.pom
